@@ -131,13 +131,18 @@ def analyze_shots(player_id: int, season: str = "2024-25"):
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     response = client.messages.create(
         model="claude-opus-4-5",
-        max_tokens=1000,
+        max_tokens=1400,
         messages=[{
             "role": "user",
             "content": f"""Analyze this NBA player's shot chart data for the {season} season.
-            Return ONLY a JSON array of exactly 4 insight objects, no other text.
-            Each object must have: "title" (short), "description" (2 sentences, specific with numbers), "type" (one of: "strength", "improvement", "trend", "warning").
-            
+            Return ONLY a single JSON object, no other text. Shape:
+            {{
+              "executiveSummary": "2-3 sentences overview citing key numbers from the data",
+              "recommendedFocus": "One clear, actionable coaching focus tied to the shot profile",
+              "insights": [ exactly 4 objects ]
+            }}
+            Each insight object must have: "title" (short), "description" (2 sentences, specific with numbers), "type" (one of: "strength", "improvement", "trend", "warning").
+
             Shot data:
             {summary}"""
         }]
@@ -150,5 +155,9 @@ def analyze_shots(player_id: int, season: str = "2024-25"):
         text = text.split("```")[1]
         if text.startswith("json"):
             text = text[4:]
-    insights = json.loads(text.strip())
-    return {"insights": insights}
+    payload = json.loads(text.strip())
+    return {
+        "executiveSummary": payload.get("executiveSummary", ""),
+        "recommendedFocus": payload.get("recommendedFocus", ""),
+        "insights": payload.get("insights", []),
+    }

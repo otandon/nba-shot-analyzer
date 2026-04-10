@@ -22,6 +22,8 @@ export default function Home() {
   const [shots, setShots] = useState<any[]>([])
   const [games, setGames] = useState<any[]>([])
   const [insights, setInsights] = useState<any[]>([])
+  const [executiveSummary, setExecutiveSummary] = useState("")
+  const [recommendedFocus, setRecommendedFocus] = useState("")
   const [season, setSeason] = useState("2025-26")
   const [loadingPlayer, setLoadingPlayer] = useState(false)
   const [loadingShots, setLoadingShots] = useState(false)
@@ -40,6 +42,8 @@ export default function Home() {
       setSearchResults([])
       setQuery("")
       setInsights([])
+      setExecutiveSummary("")
+      setRecommendedFocus("")
       setShots([])
       setGames([])
       setPlayerData(null)
@@ -78,6 +82,8 @@ export default function Home() {
     setSeason(newSeason)
     if (!selectedPlayer) return
     setInsights([])
+    setExecutiveSummary("")
+    setRecommendedFocus("")
     setLoadingShots(true)
     setLoadingPlayer(true)
 
@@ -104,7 +110,9 @@ export default function Home() {
       try {
         const data = await analyzePlayer(selectedPlayer.id, season)
         if (data.detail) return  // 404 from backend
-        setInsights(data.insights)
+        setInsights(data.insights ?? [])
+        setExecutiveSummary(typeof data.executiveSummary === "string" ? data.executiveSummary : "")
+        setRecommendedFocus(typeof data.recommendedFocus === "string" ? data.recommendedFocus : "")
       } catch {
         // silently fail, show empty state
       } finally {
@@ -243,7 +251,12 @@ export default function Home() {
                   <p className="text-muted-foreground text-sm">Claude is analyzing shot data...</p>
                 </div>
               ) : insights.length > 0 ? (
-                <AIAnalysis playerName={selectedPlayer?.full_name} insights={insights} />
+                <AIAnalysis
+                  playerName={selectedPlayer?.full_name ?? "Player"}
+                  executiveSummary={executiveSummary}
+                  recommendedFocus={recommendedFocus}
+                  insights={insights}
+                />
               ) : selectedPlayer && !playerData ? (
                 <div className="flex flex-col items-center justify-center h-full gap-2">
                   <p className="text-foreground font-medium">No data available</p>

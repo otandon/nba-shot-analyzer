@@ -2,20 +2,27 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Sparkles, TrendingUp, Target, AlertTriangle } from "lucide-react"
+import { Sparkles, TrendingUp, Target, AlertTriangle, Lightbulb } from "lucide-react"
 
 interface AnalysisInsight {
   title: string
   description: string
-  type: "strength" | "improvement" | "trend" | "warning"
+  type: "strength" | "improvement" | "trend" | "warning" | "recommended focus"
 }
 
 interface AIAnalysisProps {
   playerName: string
+  executiveSummary: string
+  recommendedFocus: string
   insights: AnalysisInsight[]
 }
 
-export function AIAnalysis({ playerName, insights }: AIAnalysisProps) {
+export function AIAnalysis({
+  playerName,
+  executiveSummary,
+  recommendedFocus,
+  insights,
+}: AIAnalysisProps) {
   const getIcon = (type: AnalysisInsight["type"]) => {
     switch (type) {
       case "strength":
@@ -26,6 +33,8 @@ export function AIAnalysis({ playerName, insights }: AIAnalysisProps) {
         return <Sparkles className="h-4 w-4 text-chart-4" />
       case "warning":
         return <AlertTriangle className="h-4 w-4 text-accent" />
+      case "recommended focus":
+        return <Lightbulb className="h-4 w-4 text-primary" />
     }
   }
 
@@ -39,6 +48,8 @@ export function AIAnalysis({ playerName, insights }: AIAnalysisProps) {
         return "secondary"
       case "warning":
         return "destructive"
+      case "recommended focus":
+        return "secondary"
     }
   }
 
@@ -66,11 +77,7 @@ export function AIAnalysis({ playerName, insights }: AIAnalysisProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {playerName} demonstrates elite shooting efficiency from the
-            perimeter with a particularly strong corner three. The mid-range
-            game has shown improvement over the last 10 games, with a 7%
-            increase in efficiency. Paint scoring remains consistent but shows
-            room for growth against taller defenders.
+            {executiveSummary || `No summary available for ${playerName}.`}
           </p>
         </CardContent>
       </Card>
@@ -117,8 +124,7 @@ export function AIAnalysis({ playerName, insights }: AIAnalysisProps) {
                 Recommended Focus
               </p>
               <p className="text-xs text-muted-foreground">
-                Increase shot attempts from left corner three where efficiency
-                is 12% above average
+                {recommendedFocus || "No recommendation returned for this analysis."}
               </p>
             </div>
           </div>
