@@ -1,5 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
-console.log("BASE_URL", BASE_URL)
+const BASE_URL = "https://nba-shot-analyzer-production.up.railway.app"
 
 export async function searchPlayers(query: string) {
   const res = await fetch(`${BASE_URL}/api/players/search?q=${query}`)
