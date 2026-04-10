@@ -1,4 +1,4 @@
-const BASE_URL = "nba-shot-analyzer.railway.internal"
+const BASE_URL = "nba-shot-analyzer-production.up.railway.app"
 
 export async function searchPlayers(query: string) {
   const res = await fetch(`${BASE_URL}/api/players/search?q=${query}`)
