@@ -23,12 +23,38 @@ import requests as _requests
 load_dotenv()
 
 
-# stats.nba.com blocks cloud IPs that use the default short timeout.
-# Patch the shared session to always use a 60s timeout.
+# stats.nba.com blocks cloud IPs without browser-like headers and drops
+# connections that use the default (None) timeout. Fix both:
+#   1. Override headers to include the NBA-specific tokens stats.nba.com requires.
+#   2. Use a custom session that enforces a 60s read timeout (nba_api passes
+#      timeout=None explicitly, so setdefault() is not enough — we must replace it).
+NBAStatsHTTP.headers = {
+    "Host": "stats.nba.com",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "x-nba-stats-origin": "stats",
+    "x-nba-stats-token": "true",
+    "Referer": "https://www.nba.com/",
+    "Origin": "https://www.nba.com",
+    "Connection": "keep-alive",
+}
+
+
 class _TimeoutSession(_requests.Session):
+    """Always apply a 60-second read timeout; nba_api passes timeout=None explicitly
+    so setdefault() would not override it — we unconditionally replace None."""
+
     def get(self, url, **kwargs):
-        kwargs.setdefault("timeout", 60)
+        if not kwargs.get("timeout"):
+            kwargs["timeout"] = 60
         return super().get(url, **kwargs)
+
 
 NBAStatsHTTP.set_session(_TimeoutSession())
 
