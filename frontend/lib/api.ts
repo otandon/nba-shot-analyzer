@@ -23,9 +23,11 @@ export async function getGameLog(playerId: number, season: string = "2025-26") {
   return res.json()
 }
 
-export async function analyzePlayer(playerId: number, season: string = "2025-26") {
+export async function analyzePlayer(playerId: number, season: string = "2025-26", question?: string) {
   const res = await fetch(`${BASE_URL}/api/players/${playerId}/analyze?season=${season}`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question: question || null }),
   })
   return res.json()
 }

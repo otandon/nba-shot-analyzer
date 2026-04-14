@@ -9,7 +9,7 @@ import { GameLog } from "@/components/game-log"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Activity, BarChart3, FileText, Search, Loader2 } from "lucide-react"
+import { Activity, BarChart3, FileText, Search, Loader2, Send } from "lucide-react"
 import { searchPlayers, getPlayerInfo, getShots, getGameLog, analyzePlayer } from "@/lib/api"
 
 const SEASONS = ["2025-26", "2024-25", "2023-24", "2022-23", "2021-22", "2020-21"]
@@ -29,6 +29,7 @@ export default function Home() {
   const [loadingShots, setLoadingShots] = useState(false)
   const [loadingAnalysis, setLoadingAnalysis] = useState(false)
   const [activeTab, setActiveTab] = useState("chart")
+  const [customQuestion, setCustomQuestion] = useState("")
 
   async function handleSearch() {
     if (!query.trim()) return
@@ -47,6 +48,7 @@ export default function Home() {
       setShots([])
       setGames([])
       setPlayerData(null)
+      setCustomQuestion("")
       setLoadingPlayer(true)
       setLoadingShots(true)
 
@@ -102,23 +104,35 @@ export default function Home() {
     }
   }
 
+  async function runAnalysis(question?: string) {
+    if (!selectedPlayer || !playerData) return
+    setLoadingAnalysis(true)
+    setInsights([])
+    setExecutiveSummary("")
+    setRecommendedFocus("")
+    try {
+      const data = await analyzePlayer(selectedPlayer.id, season, question)
+      if (data.detail) return
+      setInsights(data.insights ?? [])
+      setExecutiveSummary(typeof data.executiveSummary === "string" ? data.executiveSummary : "")
+      setRecommendedFocus(typeof data.recommendedFocus === "string" ? data.recommendedFocus : "")
+    } catch {
+      // silently fail, show empty state
+    } finally {
+      setLoadingAnalysis(false)
+    }
+  }
+
   async function handleTabChange(tab: string) {
     setActiveTab(tab)
     if (tab === "analysis" && selectedPlayer && insights.length === 0) {
-      if (!playerData) return  // no valid player loaded, do nothing
-      setLoadingAnalysis(true)
-      try {
-        const data = await analyzePlayer(selectedPlayer.id, season)
-        if (data.detail) return  // 404 from backend
-        setInsights(data.insights ?? [])
-        setExecutiveSummary(typeof data.executiveSummary === "string" ? data.executiveSummary : "")
-        setRecommendedFocus(typeof data.recommendedFocus === "string" ? data.recommendedFocus : "")
-      } catch {
-        // silently fail, show empty state
-      } finally {
-        setLoadingAnalysis(false)
-      }
+      await runAnalysis()
     }
+  }
+
+  async function handleAskQuestion() {
+    if (!customQuestion.trim()) return
+    await runAnalysis(customQuestion)
   }
   async function handleGameClick(gameId: string) {
     if (!selectedPlayer) return
@@ -244,7 +258,25 @@ export default function Home() {
               )}
             </TabsContent>
 
-            <TabsContent value="analysis" className="flex-1 overflow-y-auto">
+            <TabsContent value="analysis" className="flex-1 overflow-y-auto flex flex-col gap-4">
+              {selectedPlayer && playerData && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Ask Claude anything about this player..."
+                    value={customQuestion}
+                    onChange={(e) => setCustomQuestion(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAskQuestion()}
+                    disabled={loadingAnalysis}
+                  />
+                  <Button
+                    size="icon"
+                    onClick={handleAskQuestion}
+                    disabled={loadingAnalysis || !customQuestion.trim()}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
               {loadingAnalysis ? (
                 <div className="flex items-center justify-center h-full gap-3">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
