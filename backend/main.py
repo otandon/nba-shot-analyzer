@@ -17,8 +17,28 @@ from nba_api.stats.endpoints import (
 )
 import anthropic
 from dotenv import load_dotenv
+from nba_api.library.http import NBAStatsHTTP
 
 load_dotenv()
+
+# NBA stats.nba.com blocks cloud IPs without browser-like headers
+NBAStatsHTTP.HEADERS = {
+    "Host": "stats.nba.com",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "x-nba-stats-origin": "stats",
+    "x-nba-stats-token": "true",
+    "Referer": "https://www.nba.com/",
+    "Origin": "https://www.nba.com",
+    "Connection": "keep-alive",
+}
+NBAStatsHTTP.TIMEOUT = 60
 
 app = FastAPI()
 
